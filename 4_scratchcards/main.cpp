@@ -1,6 +1,6 @@
 #include <iostream>
 #include <unordered_set>
-#include <unordered_map>
+#include <vector>
 #include <queue>
 #include <fstream>
 #include <sstream>
@@ -32,7 +32,7 @@ size_t card_score(const Card& card)
     return 1UL << (matches-1);
 }
 
-std::unordered_map<int, Card> load_cards_from_file(const std::string& path)
+std::vector<Card> load_cards_from_file(const std::string& path)
 {
     std::ifstream file(path);
     if (!file)
@@ -40,7 +40,7 @@ std::unordered_map<int, Card> load_cards_from_file(const std::string& path)
         throw std::runtime_error("File could not be opened");
     }
 
-    std::unordered_map<int, Card> cards;
+    std::vector<Card> cards;
 
     std::string line;
     while(std::getline(file, line))
@@ -68,7 +68,7 @@ std::unordered_map<int, Card> load_cards_from_file(const std::string& path)
                 card.numbers.insert(std::stoi(str));
         }
 
-        cards[ID] = std::move(card);
+        cards.push_back(std::move(card));
     }
 
     return cards;
@@ -82,7 +82,7 @@ void scratchcards()
 
     size_t total = 0;
 
-    for (const auto& [ID, card] : cards)
+    for (const auto& card : cards)
         total += card_score(card);
 
     std::cout << total << std::endl;
@@ -91,8 +91,8 @@ void scratchcards()
 // =========== PART 2 ===========
 
     std::queue<int> to_process;
-    for (const auto& [ID, card] : cards)
-        to_process.push(ID);
+    for (size_t i = 0; i < cards.size(); ++i)
+        to_process.push(i);
     
     size_t processed = 0;
     

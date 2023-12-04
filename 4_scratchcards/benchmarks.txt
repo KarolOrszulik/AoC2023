@@ -1,10 +1,8 @@
 0 = unordered, 1 = ordered
 
-| map | set |  debug  | release |
-+-----+-----+---------+---------|
-|  0  |  0  |  9.600s |  0.788s |
-|  0  |  1  | 11.597s |  1.113s |
-|  1  |  0  | 10.838s |  0.671s |
-|  1  |  1  | 12.577s |  1.333s |
+| container     |  debug  | release |
++---------------+---------+---------|
+| set           | 11.931s |  1.243s |
+| unordered_set |  9.808s |  0.733s |
 
  * "real" time measured by "time" utility
