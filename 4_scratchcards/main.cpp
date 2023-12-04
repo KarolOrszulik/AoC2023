@@ -7,7 +7,6 @@
 
 struct Card
 {
-    int ID = -1;
     std::unordered_set<int> winning;
     std::unordered_set<int> numbers;
 };
@@ -51,7 +50,7 @@ std::unordered_map<int, Card> load_cards_from_file(const std::string& path)
         std::istringstream iss(line);
         iss >> null >> ID >> null;
 
-        Card card {ID};
+        Card card;
         bool reached_numbers = false;
 
         std::string str;
