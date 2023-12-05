@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <numeric>
 
 struct MapRule
 {
@@ -92,9 +93,13 @@ void seeds()
     std::cout << *std::min_element(seeds.begin(), seeds.end()) << std::endl;
     
 
-    long pt2_closest = INT64_MAX;
+    long pt2_closest = __LONG_MAX__;
+    long total_seeds = std::accumulate(seed_ranges.begin(), seed_ranges.end(), 0L,
+        [](long total, const Range& current){ return total + current.length; });
+    long counter = 0;
     for (const auto& range : seed_ranges)
     {
+        std::cout << "Starting processing range of length: " << range.length << std::endl;
         for (long seed = range.start; seed < range.start + range.length; seed++)
         {
             long location = seed_location(seed, mappings);
