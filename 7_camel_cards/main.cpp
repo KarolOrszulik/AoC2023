@@ -58,7 +58,7 @@ struct Game
     {
         Type best = HIGH_CARD;
 
-        for (const auto [to_swap, strength] : char_strengths)
+        for (const auto [to_swap, _] : char_strengths)
         {
             if (to_swap == 'J')
                 continue;
@@ -82,19 +82,19 @@ struct Game
 };
 
 const std::unordered_map<char, int> Game::char_strengths = {
-    {'2', 0},
-    {'3', 1},
-    {'4', 2},
-    {'5', 3},
-    {'6', 4},
-    {'7', 5},
-    {'8', 6},
-    {'9', 7},
-    {'T', 8},
-    {'J', 9},
-    {'Q', 10},
-    {'K', 11},
-    {'A', 12}
+    {'2', 2},
+    {'3', 3},
+    {'4', 4},
+    {'5', 5},
+    {'6', 6},
+    {'7', 7},
+    {'8', 8},
+    {'9', 9},
+    {'T', 10},
+    {'J', 11},
+    {'Q', 12},
+    {'K', 13},
+    {'A', 14}
 };
 
 std::vector<Game> load_games_from_file(const std::string& path)
@@ -118,9 +118,9 @@ std::vector<Game> load_games_from_file(const std::string& path)
     return games;
 }
 
-void cames_cards(int part)
+void cames_cards(const std::string& path, int part)
 {
-    auto games = load_games_from_file("../input.txt");
+    auto games = load_games_from_file(path);
 
     std::sort(games.begin(), games.end(), [part](const Game& a, const Game& b) {
         Type a_type = part == 1 ? a.type() : a.best_type();
@@ -136,10 +136,8 @@ void cames_cards(int part)
 
             if (part == 2)
             {
-                if (a.hand[i] == 'J')
-                    a_strength = -1;
-                if (b.hand[i] == 'J')
-                    b_strength = -1;
+                a_strength *= a.hand[i] != 'J';
+                b_strength *= b.hand[i] != 'J';
             }
 
             if (a_strength != b_strength)
@@ -149,8 +147,8 @@ void cames_cards(int part)
         return false;
     });
 
-    // for (const auto& g : games)
-    //     std::cout << g.hand << " " << (part == 1 ? g.type() : g.best_type()) << std::endl;
+    for (const auto& g : games)
+        std::cout << g.hand << " " << (part == 1 ? g.type() : g.best_type()) << std::endl;
 
     size_t total_winnings = 0;
 
@@ -160,8 +158,20 @@ void cames_cards(int part)
     std::cout << total_winnings << std::endl;
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
-    cames_cards(1);
-    cames_cards(2);
+    std::string path = "../input.txt";
+
+    if (argc < 2)
+    {
+        std::cout << "Usage: " << argv[0] << " <path>" << std::endl;
+        std::cout << "Falling back to default: " << path << std::endl;
+    }
+    else
+    {
+        path = argv[1];
+    }
+    
+    cames_cards(path, 1);
+    cames_cards(path, 2);
 }
