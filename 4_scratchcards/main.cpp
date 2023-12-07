@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <queue>
 #include <fstream>
@@ -22,10 +23,8 @@ int count_matches(const Card& card)
     return matches;
 }
 
-size_t card_score(const Card& card)
+size_t matches_to_score(int matches)
 {
-    int matches = count_matches(card);
-    
     if (matches == 0)
         return 0;
     
@@ -77,13 +76,19 @@ std::vector<Card> load_cards_from_file(const std::string& path)
 void scratchcards()
 {
     auto cards = load_cards_from_file("../input.txt");
+    std::unordered_map<int, int> match_count_cache;
 
 // =========== PART 1 ===========
 
     size_t total = 0;
 
-    for (const auto& card : cards)
-        total += card_score(card);
+    for (int i = 0; i < cards.size(); i++)
+    {
+        int matches = count_matches(cards[i]);
+        match_count_cache[i] = matches;
+
+        total += matches_to_score(matches);
+    }
 
     std::cout << total << std::endl;
 
@@ -98,7 +103,8 @@ void scratchcards()
     
     while (!to_process.empty())
     {
-        int matches = count_matches(cards[to_process.front()]);
+        // int matches = count_matches(cards[to_process.front()]);
+        int matches = match_count_cache[to_process.front()];
         for (int i = 0; i < matches; i++)
         {
             to_process.push(to_process.front() + i + 1);
