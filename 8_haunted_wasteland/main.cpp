@@ -2,6 +2,9 @@
 #include <string>
 #include <unordered_map>
 #include <fstream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
 
 struct Node
 {
@@ -27,35 +30,96 @@ Data load_data_from_file(const std::string& path)
 
     file >> data.directions;
 
-    std::string line;
-    while(std::getline(file, line))
+    std::string current, left, right;
+
+    //                 this  vvvv  is to absorb the '=' sign
+    while(file >> current >> left >> left >> right)
     {
-        if (line.empty())
-            continue;
-        
-        
+        left.erase(0,1);
+        left.pop_back();
+
+        right.pop_back();
+
+        data.nodes[current] = {left, right};
     }
+
+    return data;
 }
 
-void wasteland(const std::string& path)
+void wasteland_pt1(const std::string& path)
 {
+    const Data data = load_data_from_file(path);
+
+    // std::cout << data.directions << std::endl;
+    // for(const auto& [curr, node] : data.nodes)
+    //     std::cout << curr << " -> " << node.left << " : " << node.right << std::endl;
+
+    size_t steps = 0;
+
+    std::string current = "AAA";
+
+    while (current != "ZZZ")
+    {
+        for (char dir : data.directions)
+        {
+            if (dir == 'L')
+                current = data.nodes.at(current).left;
+            else
+                current = data.nodes.at(current).right;
+            steps++;
+        }
+    }
+
+    std::cout << steps << std::endl;
+}
+
+void wasteland_pt2(const std::string& path)
+{
+    const Data data = load_data_from_file(path);
+
+    std::unordered_map<std::string, size_t> cycle_lengths;
+    for (const auto& [node, _] : data.nodes)
+        if (node.back() == 'A')
+            cycle_lengths[node] = 0;
     
+    for (auto& [node, cycle_length] : cycle_lengths)
+    {
+        std::string current = node;
+        size_t counter = 0;
 
-    Data data;
+        while (current.back() != 'Z')
+        {
+            char dir = data.directions[counter];
 
+            if (dir == 'L')
+                current = data.nodes.at(current).left;
+            else
+                current = data.nodes.at(current).right;
 
+            cycle_length++;
+            ++counter %= data.directions.length();
+        }
+    }
+
+    size_t steps = 1;
+
+    for (const auto& [node, cycle_length] : cycle_lengths)
+    {
+        steps = std::lcm(steps, cycle_length);
+    }
+
+    std::cout << steps << std::endl;
 }
 
 int main(int argc, char** argv)
 {
+    std::string path = "../input.txt";
     if (argc < 2)
-    {
-        std::cout << "Usage: " << argv[0] << " <path>" << std::endl;
-        std::cout << "Falling back to default" << std::endl;
-        wasteland("../test.txt");
-    }
+        std::cout << "Usage: " << argv[0] << " <path>" << std::endl
+                  << "Falling back to default: " << path << std::endl;
     else
-    {
-        wasteland(argv[1]);
-    }
+        path = argv[1];
+
+    wasteland_pt1(path);
+    wasteland_pt2(path);
 }
