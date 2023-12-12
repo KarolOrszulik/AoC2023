@@ -13,9 +13,39 @@ struct Record
     std::vector<size_t> streaks;
 };
 
-std::vector<size_t> count_streaks(const std::string& to_check)
+// std::vector<size_t> count_streaks(const std::string& to_check)
+// {
+//     std::vector<size_t> result;
+
+//     size_t current_length = 0;
+//     for (char c : to_check)
+//     {
+//         switch (c)
+//         {
+//         case '#':
+//             current_length++;
+//             break;
+
+//         case '.':
+//             if (current_length > 0)
+//                 result.push_back(current_length);
+//             current_length = 0;
+//             break;
+        
+//         default:
+//             throw std::runtime_error(std::string("Unsupported char: ") + c);
+//         }
+//     }
+
+//     if (current_length > 0)
+//         result.push_back(current_length);
+    
+//     return result;
+// }
+
+bool compare_streaks(const std::string& to_check, const std::vector<size_t>& reference) try
 {
-    std::vector<size_t> result;
+    size_t ref_idx = 0;
 
     size_t current_length = 0;
     for (char c : to_check)
@@ -27,8 +57,9 @@ std::vector<size_t> count_streaks(const std::string& to_check)
             break;
 
         case '.':
-            if (current_length > 0)
-                result.push_back(current_length);
+            if (current_length != 0 && current_length != reference.at(ref_idx++))
+                return false;
+
             current_length = 0;
             break;
         
@@ -37,10 +68,15 @@ std::vector<size_t> count_streaks(const std::string& to_check)
         }
     }
 
-    if (current_length > 0)
-        result.push_back(current_length);
+    if (current_length != 0 && current_length != reference.at(ref_idx++)
+        || ref_idx != reference.size())
+        return false;
     
-    return result;
+    return true;
+}
+catch (const std::out_of_range& e)
+{
+    return false;
 }
 
 size_t options_for_record(const Record& record)
@@ -59,24 +95,9 @@ size_t options_for_record(const Record& record)
                 swapped[i] = (1<<mask_idx++ & bitmask) ? '.' : '#';
         }
 
-        // std::cout << swapped << std::endl;
-        
-        std::vector<size_t> streaks = count_streaks(swapped);
+        // std::cout << std::endl << swapped;
 
-        if (streaks.size() != record.streaks.size())
-            continue;
-
-        bool same = true;
-        for (size_t i = 0; i < streaks.size(); i++)
-        {
-            if (streaks[i] != record.streaks[i])
-            {
-                same = false;
-                break;
-            }
-        }
-        if (same)
-            result++;
+        result += compare_streaks(swapped, record.streaks);
     }
 
     return result;
@@ -117,8 +138,10 @@ int main()
 {
     std::vector<Record> records = parse_lines("../input.txt");
 
-    size_t total_arrangements = std::accumulate(records.begin(), records.end(), 0UL,
-        [](const auto& sum, const auto& r) { return sum + options_for_record(r); });
+    size_t total_arrangements = 0;
+    
+    for (const auto& r : records)
+        total_arrangements += options_for_record(r);
 
     std::cout << total_arrangements << std::endl;
 
