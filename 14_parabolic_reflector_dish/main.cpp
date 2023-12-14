@@ -72,17 +72,27 @@ void roll_rocks_north_fast(Grid& grid)
         {
             Cell& current = grid[y][x];
 
-            if (last_free == -1 && current == EMPTY)
-                last_free = y;
-            
-            if (current == SQUARE)
-                last_free = -1;
-            
-            if (last_free != -1 && current == ROUND)
+            switch (current)
             {
-                current = EMPTY;
-                grid[last_free][x] = ROUND;
-                last_free++;
+            case EMPTY:
+                if (last_free == -1)
+                    last_free = y;
+                break;
+
+            case SQUARE:
+                last_free = -1;
+                break;
+
+            case ROUND:
+                if (last_free != -1)
+                {
+                    current = EMPTY;
+                    grid[last_free][x] = ROUND;
+                    last_free++;
+                }
+                break;
+            
+            default: throw std::runtime_error("Invalid cell type");
             }
         }
     }
@@ -106,6 +116,42 @@ void roll_rocks_south(Grid& grid)
         }
 }
 
+void roll_rocks_south_fast(Grid& grid)
+{
+    for (int x = 0; x < grid[0].size(); x++)
+    {
+        int last_free = -1;
+
+        for (int y = grid.size()-1; y >= 0; y--)
+        {
+            Cell& current = grid[y][x];
+
+            switch (current)
+            {
+            case EMPTY:
+                if (last_free == -1)
+                    last_free = y;
+                break;
+
+            case SQUARE:
+                last_free = -1;
+                break;
+
+            case ROUND:
+                if (last_free != -1)
+                {
+                    current = EMPTY;
+                    grid[last_free][x] = ROUND;
+                    last_free--;
+                }
+                break;
+            
+            default: throw std::runtime_error("Invalid cell type");
+            }
+        }
+    }
+}
+
 void roll_rocks_west(Grid& grid)
 {
     for (int y = 0; y < grid.size(); y++)
@@ -122,6 +168,42 @@ void roll_rocks_west(Grid& grid)
                 std::swap(grid[y][curr_x-1], grid[y][curr_x]);
             }
         }
+}
+
+void roll_rocks_west_fast(Grid& grid)
+{
+    for (int y = 0; y < grid.size(); y++)
+    {
+        int last_free = -1;
+
+        for (int x = 0; x < grid[y].size(); x++)
+        {
+            Cell& current = grid[y][x];
+
+            switch (current)
+            {
+            case EMPTY:
+                if (last_free == -1)
+                    last_free = x;
+                break;
+
+            case SQUARE:
+                last_free = -1;
+                break;
+
+            case ROUND:
+                if (last_free != -1)
+                {
+                    current = EMPTY;
+                    grid[y][last_free] = ROUND;
+                    last_free++;
+                }
+                break;
+            
+            default: throw std::runtime_error("Invalid cell type");
+            }
+        }
+    }
 }
 
 void roll_rocks_east(Grid& grid)
@@ -142,12 +224,40 @@ void roll_rocks_east(Grid& grid)
         }
 }
 
-void spin_cycle(Grid& grid)
+void roll_rocks_east_fast(Grid& grid)
 {
-    roll_rocks_north(grid);
-    roll_rocks_west(grid);
-    roll_rocks_south(grid);
-    roll_rocks_east(grid);
+    for (int y = 0; y < grid.size(); y++)
+    {
+        int last_free = -1;
+
+        for (int x = grid[y].size()-1; x >= 0; x--)
+        {
+            Cell& current = grid[y][x];
+
+            switch (current)
+            {
+            case EMPTY:
+                if (last_free == -1)
+                    last_free = x;
+                break;
+
+            case SQUARE:
+                last_free = -1;
+                break;
+
+            case ROUND:
+                if (last_free != -1)
+                {
+                    current = EMPTY;
+                    grid[y][last_free] = ROUND;
+                    last_free--;
+                }
+                break;
+            
+            default: throw std::runtime_error("Invalid cell type");
+            }
+        }
+    }
 }
 
 void print_grid(const Grid& grid)
@@ -171,6 +281,29 @@ void print_grid(const Grid& grid)
     std::cout << std::endl;
 }
 
+void spin_cycle(Grid& grid)
+{
+    roll_rocks_north(grid);
+    roll_rocks_west(grid);
+    roll_rocks_south(grid);
+    roll_rocks_east(grid);
+}
+
+void spin_cycle_fast(Grid& grid)
+{
+    roll_rocks_north_fast(grid);
+    // print_grid(grid);
+
+    roll_rocks_west_fast(grid);
+    // print_grid(grid);
+
+    roll_rocks_south_fast(grid);
+    // print_grid(grid);
+
+    roll_rocks_east_fast(grid);
+    // print_grid(grid);
+}
+
 size_t load_on_north_beams(const Grid& grid)
 {
     size_t total_load = 0;
@@ -189,27 +322,20 @@ size_t load_on_north_beams(const Grid& grid)
 
 int main(int, char**)
 {
-    Grid grid = load_grid_from_file("../test.txt");
+    Grid grid = load_grid_from_file("../input.txt");
 
     roll_rocks_north_fast(grid);
-    print_grid(grid);
 
     std::cout << load_on_north_beams(grid) << std::endl;
 
-    // for (size_t i = 0; i < 1'000'000'000; i++)
-    // {
-    //     if (i % 10'000 == 0)
-    //         std::cout << i/10'000 << "/100'000" << std::endl;
+    for (size_t i = 0; i < 1'000'000'000; i++)
+    {
+        if (i % 10'000 == 0)
+            std::cout << i/10'000 << "/100'000" << std::endl;
 
-    //     // Grid before = grid;
-
-    //     spin_cycle(grid);
-
-    //     // if (before == grid)
-    //     // {
-    //     //     break;
-    //     // }
-    // }
+        // spin_cycle(grid);
+        spin_cycle_fast(grid);
+    }
     
     std::cout << load_on_north_beams(grid) << std::endl;
 }
