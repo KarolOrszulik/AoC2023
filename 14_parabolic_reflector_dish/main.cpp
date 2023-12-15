@@ -3,6 +3,9 @@
 #include <string>
 #include <fstream>
 
+#include <unordered_map>
+#include <algorithm>
+
 enum Cell : int8_t
 {
     INVALID = -1,
@@ -44,24 +47,6 @@ Grid load_grid_from_file(const std::string& path)
     return result;
 }
 
-void roll_rocks_north(Grid& grid)
-{
-    for (int y = 1; y < grid.size(); y++)
-        for (int x = 0; x < grid[y].size(); x++)
-        {
-            if (grid[y][x] != ROUND)
-                continue;
-
-            for (int curr_y = y; curr_y >= 1; curr_y--)
-            {
-                if (grid[curr_y-1][x] != EMPTY)
-                    break;
-                
-                std::swap(grid[curr_y-1][x], grid[curr_y][x]);
-            }
-        }
-}
-
 void roll_rocks_north_fast(Grid& grid)
 {
     for (int x = 0; x < grid[0].size(); x++)
@@ -96,24 +81,6 @@ void roll_rocks_north_fast(Grid& grid)
             }
         }
     }
-}
-
-void roll_rocks_south(Grid& grid)
-{
-    for (int y = grid.size() - 2; y >= 0; y--)
-        for (int x = 0; x < grid[y].size(); x++)
-        {
-            if (grid[y][x] != ROUND)
-                continue;
-
-            for (int curr_y = y; curr_y <= grid.size() - 2; curr_y++)
-            {
-                if (grid[curr_y+1][x] != EMPTY)
-                    break;
-                
-                std::swap(grid[curr_y+1][x], grid[curr_y][x]);
-            }
-        }
 }
 
 void roll_rocks_south_fast(Grid& grid)
@@ -152,24 +119,6 @@ void roll_rocks_south_fast(Grid& grid)
     }
 }
 
-void roll_rocks_west(Grid& grid)
-{
-    for (int y = 0; y < grid.size(); y++)
-        for (int x = 1; x < grid[y].size(); x++)
-        {
-            if (grid[y][x] != ROUND)
-                continue;
-
-            for (int curr_x = x; curr_x >= 1; curr_x--)
-            {
-                if (grid[y][curr_x-1] != EMPTY)
-                    break;
-                
-                std::swap(grid[y][curr_x-1], grid[y][curr_x]);
-            }
-        }
-}
-
 void roll_rocks_west_fast(Grid& grid)
 {
     for (int y = 0; y < grid.size(); y++)
@@ -204,24 +153,6 @@ void roll_rocks_west_fast(Grid& grid)
             }
         }
     }
-}
-
-void roll_rocks_east(Grid& grid)
-{
-    for (int y = 0; y < grid.size(); y++)
-        for (int x = grid[y].size() - 2; x >= 0; x--)
-        {
-            if (grid[y][x] != ROUND)
-                continue;
-
-            for (int curr_x = x; curr_x <= grid[y].size() - 2; curr_x++)
-            {
-                if (grid[y][curr_x+1] != EMPTY)
-                    break;
-                
-                std::swap(grid[y][curr_x+1], grid[y][curr_x]);
-            }
-        }
 }
 
 void roll_rocks_east_fast(Grid& grid)
@@ -281,14 +212,6 @@ void print_grid(const Grid& grid)
     std::cout << std::endl;
 }
 
-void spin_cycle(Grid& grid)
-{
-    roll_rocks_north(grid);
-    roll_rocks_west(grid);
-    roll_rocks_south(grid);
-    roll_rocks_east(grid);
-}
-
 void spin_cycle_fast(Grid& grid)
 {
     roll_rocks_north_fast(grid);
@@ -320,7 +243,7 @@ size_t load_on_north_beams(const Grid& grid)
     return total_load;
 }
 
-int main(int, char**)
+int main()
 {
     Grid grid = load_grid_from_file("../input.txt");
 
@@ -328,14 +251,36 @@ int main(int, char**)
 
     std::cout << load_on_north_beams(grid) << std::endl;
 
-    for (size_t i = 0; i < 1'000'000'000; i++)
-    {
-        if (i % 10'000 == 0)
-            std::cout << i/10'000 << "/100'000" << std::endl;
+    std::unordered_map<size_t, std::vector<size_t>> visited; // keyed by load_on_north so not very good but works
+    std::unordered_map<size_t, size_t> potential_cycle_lengths;
 
-        // spin_cycle(grid);
+    constexpr size_t ITERATIONS = 1'000'000'000;
+
+    for (size_t i = 0; i < ITERATIONS; i++)
+    {
         spin_cycle_fast(grid);
+
+        size_t load = load_on_north_beams(grid);
+
+        visited[load].push_back(i);
+
+        size_t repeats = visited[load].size();
+
+        if (repeats >= 10) // wait until there has the same load for 10 different iterations
+        {
+            size_t cycle_length = visited[load][repeats-1] - visited[load][repeats-2];
+            potential_cycle_lengths[cycle_length]++;
+        }
+
+        if (repeats >= 100)
+        {
+            size_t definite_cycle_length = std::max_element(potential_cycle_lengths.begin(), potential_cycle_lengths.end(), [](const auto& a, const auto& b) { return a.second < b.second; })->first;
+
+            size_t delta = (ITERATIONS - 1 - i) / definite_cycle_length;
+            i += delta * definite_cycle_length;
+        }
     }
     
     std::cout << load_on_north_beams(grid) << std::endl;
+    // I don't think this is guaranteed to be the correct answer, but it works for my input
 }
