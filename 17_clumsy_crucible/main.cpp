@@ -5,7 +5,7 @@
 #include <array>
 
 typedef std::vector<std::vector<int8_t>> Map;
-
+typedef std::vector<std::vector<size_t>> CostMap;
 
 enum Direction
 {
@@ -107,18 +107,19 @@ Coord step(Coord coord, Direction dir)
     return {-1, -1};
 }
 
-
-size_t min_loss()
+// DFS
+void generate_costmap(const Map& map, CostMap& cost_map, const Coord coord = {0,0}, const Direction dir = INVALID)
 {
-    return 0;
+    cost_map[0][0] = 0;
 }
-
 
 int main()
 {
-    Map map = load_map_from_file("../test_sm.txt");
+    const Map map = load_map_from_file("../test_sm.txt");
+    CostMap costmap(map.size(), std::vector<size_t>(map[0].size(), ~0ULL));
     
-    size_t cost = min_loss();
+    generate_costmap(map, costmap);
 
-    std::cout << "Min cost: " << cost << std::endl;
+    const Coord end = {map[0].size() - 1, map.size() - 1};
+    std::cout << costmap[end.y][end.x] << std::endl;
 }
